@@ -232,7 +232,10 @@
 
         const data = await response.json();
 
-        addMessage(data.output || 'Sem resposta.', 'bot');
+        addMessage(
+            data.response || data.text || data.output || 'Sem resposta.',
+            'bot'
+        );
 
       } catch (error) {
         console.error(error);
