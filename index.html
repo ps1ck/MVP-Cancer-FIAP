@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Challenge FIAP - MVP</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      background: #0f172a;
+      color: white;
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.25);
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    .chat-box {
+      height: 400px;
+      overflow-y: auto;
+      background: #0f172a;
+      border-radius: 16px;
+      padding: 16px;
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 14px;
+      max-width: 80%;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      background: #2563eb;
+      align-self: flex-end;
+    }
+
+    .bot {
+      background: #334155;
+      align-self: flex-start;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      background: #0f172a;
+      color: white;
+    }
+
+    button {
+      border: none;
+      background: #2563eb;
+      color: white;
+      padding: 14px 22px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .status {
+      margin-top: 14px;
+      color: #94a3b8;
+    }
+
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      .input-area {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .message {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="card">
+      <h1>Challenge FIAP</h1>
+      <p>
+        MVP de suporte emocional para pessoas enfrentando câncer.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>💬 Chatbot</h2>
+
+      <div class="chat-box" id="chatBox"></div>
+
+      <div class="input-area">
+        <input
+          type="text"
+          id="chatInput"
+          placeholder="Digite sua mensagem..."
+        />
+
+        <button onclick="sendMessage()">
+          Enviar
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎥 Importar vídeo automaticamente</h2>
+
+      <p style="margin-top: 10px; margin-bottom: 20px;">
+        Cole um link do YouTube para transcrever e preencher a planilha automaticamente.
+      </p>
+
+      <div class="input-area">
+        <input
+          type="text"
+          id="videoInput"
+          placeholder="https://youtube.com/..."
+        />
+
+        <button onclick="importVideo()">
+          Importar
+        </button>
+      </div>
+
+      <div class="status" id="videoStatus"></div>
+    </div>
+
+  </div>
+
+  <script>
+
+    // =========================
+    // COLE SEUS WEBHOOKS AQUI
+    // =========================
+
+    const CHATBOT_WEBHOOK = 'COLE_AQUI_WEBHOOK_CHATBOT';
+
+    const IMPORT_WEBHOOK = 'COLE_AQUI_WEBHOOK_IMPORT';
+
+
+    // =========================
+    // CHATBOT
+    // =========================
+
+    const chatBox = document.getElementById('chatBox');
+
+    function addMessage(text, type) {
+      const message = document.createElement('div');
+
+      message.classList.add('message');
+      message.classList.add(type);
+
+      message.innerText = text;
+
+      chatBox.appendChild(message);
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      addMessage(text, 'user');
+
+      input.value = '';
+
+      try {
+        const response = await fetch(CHATBOT_WEBHOOK, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: text
+          })
+        });
+
+        const data = await response.json();
+
+        addMessage(data.output || 'Sem resposta.', 'bot');
+
+      } catch (error) {
+        console.error(error);
+
+        addMessage('Erro ao conectar com o chatbot.', 'bot');
+      }
+    }
+
+
+    // =========================
+    // IMPORTAÇÃO DE VÍDEO
+    // =========================
+
+    async function importVideo() {
+      const input = document.getElementById('videoInput');
+
+      const status = document.getElementById('videoStatus');
+
+      const url = input.value.trim();
+
+      if (!url) return;
+
+      status.innerText = '⏳ Processando vídeo...';
+
+      try {
+        const response = await fetch(IMPORT_WEBHOOK, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url
+          })
+        });
+
+        const data = await response.json();
+
+        console.log(data);
+
+        status.innerText = '✅ Vídeo processado e adicionado na planilha!';
+
+        input.value = '';
+
+      } catch (error) {
+        console.error(error);
+
+        status.innerText = '❌ Erro ao importar vídeo.';
+      }
+    }
+
+
+    // =========================
+    // ENTER NO CHAT
+    // =========================
+
+    document
+      .getElementById('chatInput')
+      .addEventListener('keypress', function(event) {
+
+        if (event.key === 'Enter') {
+          sendMessage();
+        }
+      });
+
+
+    // =========================
+    // ENTER NO IMPORT
+    // =========================
+
+    document
+      .getElementById('videoInput')
+      .addEventListener('keypress', function(event) {
+
+        if (event.key === 'Enter') {
+          importVideo();
+        }
+      });
+
+  </script>
+
+</body>
+</html>
