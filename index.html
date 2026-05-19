@@ -275,9 +275,22 @@
 
         console.log(data);
 
-        status.innerText = '✅ Vídeo processado e adicionado na planilha!';
+        // VÍDEO REPETIDO
+        if (data.response) {
+          status.innerText = '⚠️ ' + data.response;
+          return;
+        }
 
+        // SUCESSO
+        if (data.status === 'ok') {
+        status.innerText = '✅ Vídeo processado e adicionado na planilha!';
         input.value = '';
+        return;
+        }
+
+        // RESPOSTA DESCONHECIDA
+        status.innerText = '⚠️ Resposta inesperada do servidor.';
+
 
       } catch (error) {
         console.error(error);
